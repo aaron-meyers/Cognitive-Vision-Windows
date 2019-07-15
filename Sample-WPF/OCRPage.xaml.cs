@@ -33,7 +33,11 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Shapes;
 
 // -----------------------------------------------------------------------
 // KEY SAMPLE CODE STARTS HERE
@@ -87,7 +91,7 @@ namespace VisionAPI_WPF_Samples
                     // Upload an image and perform OCR.
                     //
                     Log("Calling ComputerVisionClient.RecognizePrintedTextInStreamAsync()...");
-                    OcrResult ocrResult = await client.RecognizePrintedTextInStreamAsync(!DetectOrientation, imageFileStream, language);
+                    OcrResult ocrResult = await client.RecognizePrintedTextInStreamAsync(DetectOrientation, imageFileStream, language);
                     return ocrResult;
                 }
             }
@@ -120,7 +124,7 @@ namespace VisionAPI_WPF_Samples
                 // Perform OCR on the given URL.
                 //
                 Log("Calling ComputerVisionClient.RecognizePrintedTextAsync()...");
-                OcrResult ocrResult = await client.RecognizePrintedTextAsync(!DetectOrientation, imageUrl, language);
+                OcrResult ocrResult = await client.RecognizePrintedTextAsync(DetectOrientation, imageUrl, language);
                 return ocrResult;
             }
 
@@ -161,6 +165,64 @@ namespace VisionAPI_WPF_Samples
             Log("");
             Log("OCR Result:");
             LogOcrResults(ocrResult);
+
+            if (ocrResult != null && ocrResult.Regions != null)
+            {
+                _imageCanvas.Height = ocrResult.Regions.Max(r =>
+                {
+                    var rect = ToBoundingRect(r.BoundingBox);
+                    return rect.Y + rect.H;
+                });
+
+                foreach (var item in ocrResult.Regions)
+                {
+                    AddRectangle(item.BoundingBox, Brushes.Red);
+
+                    foreach (var line in item.Lines)
+                    {
+                        AddRectangle(line.BoundingBox, Brushes.Green);
+
+                        foreach (var word in line.Words)
+                        {
+                            AddRectangle(word.BoundingBox, Brushes.Blue);
+
+                            var bounds = ToBoundingRect(word.BoundingBox);
+                            var textBlock = new TextBlock
+                            {
+                                Width = bounds.W,
+                                Height = bounds.H,
+                                Foreground = Brushes.Blue,
+                                Text = word.Text,
+                                FontSize = 22,
+                            };
+                            Canvas.SetLeft(textBlock, bounds.X + 36);
+                            Canvas.SetTop(textBlock, bounds.Y + 2);
+                            _imageCanvas.Children.Add(textBlock);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void AddRectangle(string boundingBox, Brush strokeBrush)
+        {
+            var bounds = ToBoundingRect(boundingBox);
+            var rect = new Rectangle
+            {
+                Width = bounds.W,
+                Height = bounds.H,
+                Stroke = strokeBrush,
+                StrokeThickness = 1,
+            };
+            _imageCanvas.Children.Add(rect);
+            Canvas.SetLeft(rect, bounds.X);
+            Canvas.SetTop(rect, bounds.Y);
+        }
+
+        private static BoundingRect ToBoundingRect(string s)
+        {
+            var a = s.Split(',').Select(v => int.Parse(v)).ToArray();
+            return new BoundingRect(a[0], a[1], a[2], a[3]);
         }
     }
 }

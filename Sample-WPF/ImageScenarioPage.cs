@@ -354,6 +354,14 @@ namespace VisionAPI_WPF_Samples
 
             if (results != null && results.Regions != null)
             {
+                stringBuilder.Append("Orientation/Angle: ");
+                stringBuilder.Append(results.Orientation);
+                stringBuilder.Append(" / ");
+                stringBuilder.AppendLine(results.TextAngle.ToString());
+
+                stringBuilder.Append("Language: ");
+                stringBuilder.AppendLine(results.Language);
+
                 stringBuilder.Append("Text: ");
                 stringBuilder.AppendLine();
                 foreach (var item in results.Regions)
