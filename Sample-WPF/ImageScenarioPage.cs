@@ -41,6 +41,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
+using System.Linq;
 
 namespace VisionAPI_WPF_Samples
 {
@@ -366,12 +367,12 @@ namespace VisionAPI_WPF_Samples
                 stringBuilder.AppendLine();
                 foreach (var item in results.Regions)
                 {
-                    foreach (var line in item.Lines)
+                    foreach (var line in item.Lines.OrderBy(l=>l, new OCRPage.LineComparer()))
                     {
                         foreach (var word in line.Words)
                         {
                             stringBuilder.Append(word.Text);
-                            stringBuilder.Append(" ");
+                            //stringBuilder.Append(" ");
                         }
 
                         stringBuilder.AppendLine();

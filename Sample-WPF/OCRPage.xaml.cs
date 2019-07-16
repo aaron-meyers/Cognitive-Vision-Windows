@@ -32,6 +32,7 @@
 //
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -173,6 +174,11 @@ namespace VisionAPI_WPF_Samples
                     var rect = ToBoundingRect(r.BoundingBox);
                     return rect.Y + rect.H;
                 });
+                _imageCanvas.Width = ocrResult.Regions.Max(r =>
+                {
+                    var rect = ToBoundingRect(r.BoundingBox);
+                    return rect.X + rect.W;
+                });
 
                 foreach (var item in ocrResult.Regions)
                 {
@@ -223,6 +229,26 @@ namespace VisionAPI_WPF_Samples
         {
             var a = s.Split(',').Select(v => int.Parse(v)).ToArray();
             return new BoundingRect(a[0], a[1], a[2], a[3]);
+        }
+
+        internal sealed class LineComparer : IComparer<OcrLine>
+        {
+            public int Compare(OcrLine x, OcrLine y)
+            {
+                if (x.BoundingBox == y.BoundingBox)
+                    return 0;
+
+                var rx = ToBoundingRect(x.BoundingBox);
+                var ry = ToBoundingRect(y.BoundingBox);
+
+                if (rx.Y + rx.H < ry.Y)
+                    return -1;
+
+                if (rx.X > ry.X)
+                    return -1;
+
+                return 1;
+            }
         }
     }
 }
